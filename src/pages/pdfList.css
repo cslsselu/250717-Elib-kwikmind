@@ -1,0 +1,55 @@
+/* modalStyles.css */
+
+/* Set minimum height for modal body */
+.modal-body {
+    min-height: 600px; /* Increase the minimum height of the modal body */
+}
+
+/* Increase font size and adjust spacing for modal header */
+.modal-header {
+    font-size: 2rem; /* Increase the font size of the modal header */
+    padding: 1.5rem; /* Increase the padding of the modal header */
+}
+
+/* Increase font size for modal title */
+.modal-title {
+    font-size: 2rem; /* Increase the font size of the modal title */
+}
+
+/* Increase font size for modal footer buttons */
+.modal-footer .btn {
+    font-size: 1.5rem; /* Increase the font size of the modal footer buttons */
+    padding: 0.5rem 1.5rem; /* Increase the padding of the modal footer buttons */
+}
+
+/* Set minimum width for modal dialog */
+.modal-dialog {
+    min-width: 60%; /* Increase the minimum width of the modal dialog */
+    overflow-x: auto; /* Enable horizontal scrolling if content overflows */
+}
+
+/* Adjust padding for modal content */
+.modal-content {
+    padding: 2.5rem; /* Increase the padding of the modal content */
+}
+
+/* Adjust the size of the PDF content */
+/* .react-pdf__Page {
+    width: 2500px; 
+    height: 1200px; 
+} */
+
+
+.pdf-modal-iframe {
+    width: 100%;
+    height: 800px;
+    border: none;
+    font-size: 16px;
+  }
+
+  /* For the react pdf */
+  .pdf-content {
+  width: 5;
+}
+
+  

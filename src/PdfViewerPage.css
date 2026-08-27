@@ -1,0 +1,43 @@
+.pdf-viewer-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .pdf-viewer-title {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .pdf-viewer-navigation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .pdf-viewer-back-button {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .pdf-document {
+    border: 1px solid #ccc;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  
+  /* Styling for PDF pages */
+  .react-pdf__Page {
+    display: block;
+    margin: 0 auto;
+  }
+  
+  .react-pdf__Page canvas {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    image-rendering: -webkit-optimize-contrast; /* Improve rendering quality */
+    -webkit-transform: translateZ(0); /* Improve rendering quality */
+    transform: translateZ(0); /* Improve rendering quality */
+  }
+  

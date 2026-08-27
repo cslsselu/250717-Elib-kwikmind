@@ -1,0 +1,32 @@
+.view-logs-container {
+    margin: 20px;
+  }
+  
+  .view-logs-header {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  
+  .logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .logs-table th {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    background-color: #f2f2f2;
+  }
+  
+  .log-row:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .log-row td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
