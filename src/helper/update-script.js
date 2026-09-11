@@ -2,8 +2,10 @@ const admin = require('firebase-admin');
 
 // Initialize Firebase Admin SDK with service account
 admin.initializeApp({
-  credential: admin.credential.cert(require('C:/Users/userselu/Documents/Lates ELib/std-secure-latest/src/helper/appconfig.json')),
-  databaseURL: 'https://e-lib-6ae39.firebaseio.com' // Replace with your database URL
+  credential: admin.credential.cert(
+    require("C:/Users/userselu/Documents/Lates ELib/std-secure-latest/src/helper/appconfig.json")
+  ),
+  databaseURL: "https://elib-production-250214-default-rtdb.firebaseio.com/", // Replace with your database URL
 });
 
 const db = admin.firestore();

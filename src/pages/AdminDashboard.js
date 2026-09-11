@@ -18,7 +18,6 @@ import {
 } from "react-icons/fa6";
 import { Button, Modal } from "react-bootstrap";
 
-
 function Admin() {
   const [users, Setusers] = useState([]);
   const [selectOption, setSelectOption] = useState("all");
@@ -38,7 +37,7 @@ function Admin() {
 
         if (!timerSnapshot.empty) {
           const firstDoc = timerSnapshot.docs[0];
-          const secondsValue = firstDoc.data().seconds; 
+          const secondsValue = firstDoc.data().seconds;
           //setTime(secondsValue);
           setPlaceholder(secondsValue);
         } else {
@@ -52,26 +51,25 @@ function Admin() {
     fetchTimerValue();
   }, []); // Empty dependency array to run only on mount
 
-
   const handleSetTimer = async () => {
     if (!time) {
       alert("Please enter a valid time.");
       return;
     }
 
-    alert(time)
+    alert(time);
 
     try {
       const timerCollection = collection(db, "timer");
       const timerSnapshot = await getDocs(timerCollection);
-      
+
       if (!timerSnapshot.empty) {
         const firstDoc = timerSnapshot.docs[0]; // Get the first document
         const timerRef = doc(db, "timer", firstDoc.id);
 
         await updateDoc(timerRef, {
           seconds: parseInt(time, 10), // Convert input to number
-         // seconds: time,
+          // seconds: time,
         });
 
         alert("Timer updated successfully!");
@@ -83,7 +81,7 @@ function Admin() {
       console.error("Error updating timer:", error);
       alert("Failed to update timer.");
     }
-  }
+  };
 
   const fetchUser = async () => {
     const usersCollectionRef = collection(
@@ -105,7 +103,7 @@ function Admin() {
   const handleViewLogs = (user) => {
     sessionStorage.setItem("userEmail", user.email);
     window.open("/viewLogs", "_blank");
-};
+  };
 
   let filteredUsers = users;
   if (selectOption === "admin") {
@@ -146,8 +144,6 @@ function Admin() {
       console.error("Error updating user approval", error);
     }
   };
-  
-
 
   const toggleDelete = async (user) => {
     if (user.isAdmin) {
@@ -166,7 +162,7 @@ function Admin() {
       const userRef = doc(usersCollectionRef, querySnapshot.docs[0].id);
 
       await deleteDoc(userRef);
-      auth.deleteuser()
+      auth.deleteuser();
       setShowConfirmModalDelete(false);
 
       fetchUser();
@@ -186,51 +182,50 @@ function Admin() {
   return (
     <>
       <div className="admin-container">
-      <div className="timer-container" 
-  style={{ 
-    marginTop: "20px",  
-    marginBottom: "15px", 
-    display: "flex", 
-    alignItems: "center", 
-    gap: "10px" 
-  }}>
-  
-  <input
-    type="text"
-    placeholder={`current: ${placeholder} sec`}
-    onChange={(e) => setTime(e.target.value)}
-    className="form-control"
-    style={{ 
-      width: "160px", 
-      padding: "8px", 
-      borderRadius: "8px", 
-      border: "1px solid #ccc",
-      fontSize: "14px"
-    }}
-  />
-  
-  <button 
-    className="btn btn-primary"
-    style={{
-      padding: "8px 15px", 
-      fontSize: "14px",
-      fontWeight: "bold",
-      borderRadius: "8px", 
-      backgroundColor: "#007bff", 
-      border: "none", 
-      boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)", 
-      transition: "0.3s ease",
-      cursor: "pointer"
-    }}
-    onMouseOver={(e) => e.target.style.backgroundColor = "#0056b3"}
-    onMouseOut={(e) => e.target.style.backgroundColor = "#007bff"}
-    onClick={handleSetTimer}
-  >
-    Set Timer
-  </button>
+        <div
+          className="timer-container"
+          style={{
+            marginTop: "20px",
+            marginBottom: "15px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          <input
+            type="text"
+            placeholder={`current: ${placeholder} sec`}
+            onChange={(e) => setTime(e.target.value)}
+            className="form-control"
+            style={{
+              width: "160px",
+              padding: "8px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              fontSize: "14px",
+            }}
+          />
 
-</div>
-
+          <button
+            className="btn btn-primary"
+            style={{
+              padding: "8px 15px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              borderRadius: "8px",
+              backgroundColor: "#007bff",
+              border: "none",
+              boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.2)",
+              transition: "0.3s ease",
+              cursor: "pointer",
+            }}
+            onMouseOver={(e) => (e.target.style.backgroundColor = "#0056b3")}
+            onMouseOut={(e) => (e.target.style.backgroundColor = "#007bff")}
+            onClick={handleSetTimer}
+          >
+            Set Timer
+          </button>
+        </div>
 
         <center>
           <h2> Admin Dashboard</h2>
@@ -264,19 +259,27 @@ function Admin() {
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td style={{ fontSize: "13px" }}>
-                    {user.date ? user.date.toDate().toLocaleString() : 'N/A'}
+                    {user.date
+                      ? user.date.toDate
+                        ? user.date.toDate().toLocaleString()
+                        : new Date(user.date).toLocaleString()
+                      : "N/A"}
                   </td>
                   <td>{user.isAdmin ? "Admin" : "User"}</td>
                   <td>
                     {user.isApproved ? (
                       <div>
                         &nbsp; &nbsp; &nbsp;
-                        <FaSquareCheck style={{ color: "#17c200", fontSize: "20px" }} />
+                        <FaSquareCheck
+                          style={{ color: "#17c200", fontSize: "20px" }}
+                        />
                       </div>
                     ) : (
                       <div>
                         &nbsp; &nbsp; &nbsp;
-                        <FaSquareXmark style={{ color: "red", fontSize: "20px" }} />
+                        <FaSquareXmark
+                          style={{ color: "red", fontSize: "20px" }}
+                        />
                       </div>
                     )}
                   </td>
@@ -367,41 +370,40 @@ function Admin() {
         </Modal>
         {/* Delete Modal */}
 
-<Modal
-  show={showConfirmModalDelete}
-  keyboard={false}
-  onHide={() => setShowConfirmModalDelete(false)}
-  dialogClassName="custom-modal"
->
-  <Modal.Header>
-    <Modal.Title>Delete</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    <strong>User: </strong>
-    {userToApprove.name} <br />
-    <strong>Change Permission </strong>
-    <hr />
-    Are you sure to delete this user?
-    <br />
-  </Modal.Body>
-  <Modal.Footer>
-    <Button
-      variant="success"
-      onClick={() => toggleDelete(userToApprove)}
-    >
-      Save
-    </Button>
-    <Button
-      variant="danger"
-      onClick={() => {
-        setShowConfirmModalDelete(false);
-      }}
-    >
-      Cancel
-    </Button>
-  </Modal.Footer>
-</Modal>
-
+        <Modal
+          show={showConfirmModalDelete}
+          keyboard={false}
+          onHide={() => setShowConfirmModalDelete(false)}
+          dialogClassName="custom-modal"
+        >
+          <Modal.Header>
+            <Modal.Title>Delete</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <strong>User: </strong>
+            {userToApprove.name} <br />
+            <strong>Change Permission </strong>
+            <hr />
+            Are you sure to delete this user?
+            <br />
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="success"
+              onClick={() => toggleDelete(userToApprove)}
+            >
+              Save
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setShowConfirmModalDelete(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </>
   );
