@@ -264,7 +264,8 @@ function Admin() {
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td style={{ fontSize: "13px" }}>
-                    {user.date ? user.date.toDate().toLocaleString() : 'N/A'}
+                     {user.date ? new Date(user.date).toLocaleString() : "N/A"}
+
                   </td>
                   <td>{user.isAdmin ? "Admin" : "User"}</td>
                   <td>
