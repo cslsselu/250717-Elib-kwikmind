@@ -6,7 +6,7 @@ body {
   margin: 0%;
   font-family: Arial, Helvetica, sans-serif;
   overflow-x: hidden;
-  flex:1
+  flex: 1;
 }
 .homePage a {
   color: green;
@@ -49,6 +49,32 @@ a {
   height: calc(100vh - 80px);
   display: grid;
   place-items: center;
+}
+
+/* Logout confirmation modal */
+.logout-modal {
+  max-width: 400px !important;
+  height: auto !important;
+}
+
+.logout-modal .modal-content {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: fit-content !important;
+}
+
+.logout-modal .modal-body {
+  height: auto !important;
+  min-height: unset !important;
+  padding: 20px;
+}
+
+.logout-modal .modal-header {
+  padding: 15px 20px;
+}
+
+.logout-modal .modal-footer {
+  padding: 12px 20px;
 }
 
 .cpContainer {
@@ -263,7 +289,7 @@ textarea {
 .post-title {
   font-size: 24px;
   margin-bottom: 16px;
-  display:flex;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -357,15 +383,13 @@ textarea {
   cursor: pointer;
   font-size: 16px;
   transition: transform 0.2s;
-  
 }
 
 .btn-primary {
   background-color: #06af1d;
   transform: scale(1.2);
-  
+
   color: #fff;
-  
 }
 
 .btn-primary:hover {
@@ -558,10 +582,9 @@ textarea {
     white-space: nowrap; /* Prevent table cells from wrapping on smaller screens */
   }
   .login-with-google-btn {
-   font-size: 13px;
-   padding: 10px 1px 20px 20px;
-   white-space: nowrap;
-
+    font-size: 13px;
+    padding: 10px 1px 20px 20px;
+    white-space: nowrap;
   }
 }
 
@@ -637,7 +660,6 @@ nav {
   transform: scale(1.1);
 }
 
-
 .footer {
   position: fixed;
   bottom: 0;
@@ -645,5 +667,4 @@ nav {
   background-color: black;
   color: white;
   text-align: center;
-  
 }

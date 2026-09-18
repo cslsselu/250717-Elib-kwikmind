@@ -1,12 +1,18 @@
 import React, { useState } from "react";
-import { FaPencil, FaTrashCan, FaUserTie, FaMagnifyingGlass, FaThumbsUp, FaRegThumbsUp } from "react-icons/fa6";
+import {
+  FaPencil,
+  FaTrashCan,
+  FaUserTie,
+  FaMagnifyingGlass,
+  FaThumbsUp,
+  FaRegThumbsUp,
+} from "react-icons/fa6";
 import Linkify from "react-linkify";
 import { Link } from "react-router-dom";
 import { Button, Modal } from "react-bootstrap";
 import Countdown from "react-countdown";
 import { Document, Page, pdfjs } from "react-pdf";
 import "./Card.css";
-
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -29,30 +35,29 @@ export default function Card({
   const uid = localStorage.getItem("uid") || "";
 
   const openPost = async (postId, postUrl) => {
-  setPdfUrl(postUrl);
-  setShowPdfModal(true);
+    setPdfUrl(postUrl);
+    setShowPdfModal(true);
 
-  try {
-    const uid = localStorage.getItem("uid");
+    try {
+      const uid = localStorage.getItem("uid");
 
-    if (!uid) return;
+      if (!uid) return;
 
-    // 1. Log the view under a subcollection `views` of the post
-    const viewRef = doc(db, "posts", postId, "views", uid);
-    await setDoc(viewRef, {
-      viewedAt: serverTimestamp()
-    });
+      // 1. Log the view under a subcollection `views` of the post
+      const viewRef = doc(db, "posts", postId, "views", uid);
+      await setDoc(viewRef, {
+        viewedAt: serverTimestamp(),
+      });
 
-    // 2. Increment a view count on the post (optional)
-    const postRef = doc(db, "posts", postId);
-    await updateDoc(postRef, {
-      viewCount: increment(1)
-    });
-
-  } catch (error) {
-    console.error("Error logging view in Firestore:", error);
-  }
-};
+      // 2. Increment a view count on the post (optional)
+      const postRef = doc(db, "posts", postId);
+      await updateDoc(postRef, {
+        viewCount: increment(1),
+      });
+    } catch (error) {
+      console.error("Error logging view in Firestore:", error);
+    }
+  };
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -180,33 +185,57 @@ export default function Card({
                   </div>
                 </div>
                 <div className="postCenter">
-                  <div className="postTextContainer">
-                    <Linkify
-                      componentDecorator={(
-                        decoratedHref,
-                        decoratedText,
-                        key
-                      ) => (
-                        <a
-                          key={key}
-                          href={decoratedHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {decoratedText}
-                        </a>
-                      )}
-                    ></Linkify>
-                  </div>
-                  <center>
-                    <button
-                      type="button"
-                      className="btn btn-outline-info"
-                      onClick={() => openPost(post.id, post.postText)}
-                    >
-                      Open Post
-                    </button>
-                  </center>
+                  {(() => {
+                    // Find PDF URL inside postText
+                    const pdfRegex = /(https?:\/\/[^\s]+\.pdf(?:\?[^\s]*)?)/i;
+                    const match = post.postText?.match(pdfRegex);
+
+                    const pdfUrl = match ? match[0] : null;
+
+                    // Remove PDF URL from description
+                    const description = pdfUrl
+                      ? post.postText.replace(pdfUrl, "").trim()
+                      : post.postText;
+
+                    return (
+                      <>
+                        {/* Display description */}
+                        <div className="postTextContainer">
+                          <Linkify
+                            componentDecorator={(
+                              decoratedHref,
+                              decoratedText,
+                              key
+                            ) => (
+                              <a
+                                key={key}
+                                href={decoratedHref}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {decoratedText}
+                              </a>
+                            )}
+                          >
+                            {description}
+                          </Linkify>
+                        </div>
+
+                        {/* Show PDF button only if PDF exists */}
+                        {pdfUrl && (
+                          <div className="text-center mt-3">
+                            <button
+                              type="button"
+                              className="btn btn-outline-info"
+                              onClick={() => openPost(post.id, pdfUrl)}
+                            >
+                              Open PDF
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="postBottom">
                   <div className="postBottomLeft">

@@ -16,7 +16,10 @@ function Posts({ isAuth, isAdmin }) {
   const navigate = useNavigate();
   const [postLists, setPostLists] = useState([]);
   const [loading, isLoading] = useState(true);
-  const postsCollectionRef = collection(db, process.env.REACT_APP_ADMIN_DATABSE);
+  const postsCollectionRef = collection(
+    db,
+    process.env.REACT_APP_ADMIN_DATABSE
+  );
 
   async function deletePost(id) {
     const postDoc = doc(db, process.env.REACT_APP_ADMIN_DATABSE, id);
@@ -26,8 +29,26 @@ function Posts({ isAuth, isAdmin }) {
 
   const getPosts = async () => {
     const q = query(postsCollectionRef, orderBy("date", "desc"));
+
     const data = await getDocs(q);
-    setPostLists(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+
+    const currentDate = new Date();
+
+    const expiredPosts = data.docs
+      .map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }))
+      .filter((post) => {
+        const expiryDate = post.expiryDate?.toDate
+          ? post.expiryDate.toDate()
+          : new Date(post.expiryDate);
+
+        return expiryDate > currentDate;
+      });
+
+    setPostLists(expiredPosts);
+
     isLoading(false);
   };
 

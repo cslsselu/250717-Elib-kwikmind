@@ -1,561 +1,828 @@
 import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./App.css";
-import { Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
+
+import {
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
+import { useEffect, useState } from "react";
+
+import { Button, Modal } from "react-bootstrap";
+
+import { signOut, onAuthStateChanged } from "firebase/auth";
+
+import { collection, getDocs } from "firebase/firestore";
+
+import { auth, db } from "./firebase";
+
 import Login from "./pages/Login";
 import CreatePost from "./pages/CreateEditPost";
-import { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
-import { auth, db } from "./firebase";
 import Landing from "./pages/Landing";
 import Posts from "./pages/Posts";
 import ViewPost from "./pages/ViewPost";
 import ViewLogs from "./pages/ViewLogs";
-import "./auth/create-admin";
-import "react-toastify/dist/ReactToastify.css";
-import { collection, getDocs, updateDoc,doc} from "firebase/firestore";
-import { ToastContainer, toast } from "react-toastify";
 import Admin from "./pages/AdminDashboard";
 import SignUp from "./pages/SignUp";
 import Team from "./pages/Team";
 import PdfList from "./pages/PdfList";
 import ArticleList from "./pages/ArticleList";
 import CategoryPdfList from "./pages/categoryPdfList";
-import Logger from '../src/pages/Logger'
+import Logger from "../src/pages/Logger";
 import PdfViewerPage from "./pages/PdfViewerPage";
-import { useLocation } from "react-router-dom";
-import DropdownComponent from '../src/Dropdown';
-import CategoryDropdownComponent from '../src/CategoryDropdown';
 
-import { pdfjs } from 'react-pdf';
+import DropdownComponent from "../src/Dropdown";
+import CategoryDropdownComponent from "../src/CategoryDropdown";
+
+import { pdfjs } from "react-pdf";
+
+import { ToastContainer, toast } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
+
+import "./auth/create-admin";
+
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 function App() {
-  const postId = sessionStorage.getItem("postId") ; 
-  // const aceessTimer = 1000*5; // 20 sec
+  const postId = sessionStorage.getItem("postId");
+
   const navigate = useNavigate();
+
   const AUTO_LOGOUT_TIME = 60 * 30 * 10000;
 
-  //const totalTime = 30;
-  
-  const [isAuth, setIsAuth] = useState(localStorage.getItem("isAuth") === "true");
-  //const [isAuth, setIsAuth] = useState(true);
-  // const [isApproved, setIsApproved] = useState(localStorage.getItem("isApproved") === "true")
-  const [isApproved, setIsApproved] = useState(null)
+  /*
+   * STATES
+   */
+
+  const [isAuth, setIsAuth] = useState(
+    localStorage.getItem("isAuth") === "true"
+  );
+
+  const [isApproved, setIsApproved] = useState(null);
+
   const [isAdmin, setisAdmin] = useState(false);
-  //const email = localStorage.getItem("email") || "";
- // console.log("isApproved", isApproved)
-  //alert(localStorage.getItem("isApproved"))
-  // const [isAuth, setIsAuth] = useState(() => {
-  //   const storedAuth = localStorage.getItem("isAuth");
-  //   return storedAuth ? JSON.parse(storedAuth) : false;
-  // });
 
-   const [pdfTimer, setPdfTimer] = useState("");
-  
-    useEffect(() => {
-      const fetchTimerValue = async () => {
-        try {
-          const timerCollection = collection(db, "timer");
-          const timerSnapshot = await getDocs(timerCollection);
-  
-          if (!timerSnapshot.empty) {
-            const firstDoc = timerSnapshot.docs[0];
-            const secondsValue = firstDoc.data().seconds; 
-            setPdfTimer(secondsValue);
-          } else {
-            console.log("No timer document found.");
-          }
-        } catch (error) {
-          console.error("Error fetching timer value:", error);
-        }
-      };
-  
-      fetchTimerValue();
-    }, []); // Empty dependency array to run only on mount
-  
+  const [pdfTimer, setPdfTimer] = useState("");
 
+  const uid = localStorage.getItem("uid") || "";
+
+  const email = localStorage.getItem("email") || "";
+
+  const [loading, setLoading] = useState(true);
+
+  const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const [username, setUsername] = useState("");
+
+  /*
+   * Logout modal
+   */
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  /*
+   * Fetch PDF timer value
+   */
   useEffect(() => {
-    //alert(email)
-    const email = localStorage.getItem("email")
-    console.log("email", email)
-    //alert(email)
-    // Function to handle authentication state change
-    const handleAuthChange = (user) => {
+    const fetchTimerValue = async () => {
+      try {
+        const timerCollection = collection(db, "timer");
 
-      if (user && localStorage.getItem("isAuth")) {
-       // alert("checking the user status")
-        //alert(user.email)
+        const timerSnapshot = await getDocs(timerCollection);
 
-        checkUserStatus(); 
+        if (!timerSnapshot.empty) {
+          const firstDoc = timerSnapshot.docs[0];
 
-      } else {
+          const secondsValue = firstDoc.data().seconds;
 
-        setIsAuth(false);
-        setIsApproved(false);
-        localStorage.setItem("isAuth", JSON.stringify(false));
-       // Unauthorized()
+          setPdfTimer(secondsValue);
+        } else {
+          console.log("No timer document found.");
+        }
+      } catch (error) {
+        console.error("Error fetching timer value:", error);
       }
     };
 
-    // Set up Firebase auth listener
+    fetchTimerValue();
+  }, []);
+
+  /*
+   * Firebase authentication state listener
+   */
+  useEffect(() => {
+    const handleAuthChange = (user) => {
+      if (user && localStorage.getItem("isAuth")) {
+        checkUserStatus();
+      } else {
+        setIsAuth(false);
+
+        setIsApproved(false);
+
+        localStorage.setItem("isAuth", JSON.stringify(false));
+      }
+    };
+
     const unsubscribe = auth.onAuthStateChanged(handleAuthChange);
 
-    // Clean up subscription on component unmount
     return () => unsubscribe();
   }, [localStorage.getItem("email")]);
 
-
-  console.log(isAuth)
-  console.log("########################")
-  console.log("########################")
-  console.log(auth)
-  console.log("isApproved", isApproved)
-  console.log("isAuth", isAuth)
-  console.log(process.env.REACT_APP_API_KEY);
-
-
-
-
-  //const [isAdmin, setisAdmin] = useState(false);
-  //const [isApproved, setIsApproved] = useState(false);
-  const uid = localStorage.getItem("uid") || "";
-  const email = localStorage.getItem("email") || "";
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  // console.log("##########Approved or not ? #################")
-  // console.log(isApproved)
-
-  // const[active, setActive] = useState(false);
-  // const postCollectionRef = collection(db, process.env.REACT_APP_ADMIN_DATABSE);
-  // const postRef = doc(postCollectionRef, postId);
-
-  
-  // const updateIsActive =async ()=>{
-    
-  //   setActive(false);
-  //   await updateDoc(postRef, {
-      
-  //     isActive: false
-     
-  //   });
-  //   console.log("SUBIN ROCKSSSS")
-  // }
-  
-
-  // const fetchGroups = async () => {
-  //   try {
-  //     const pdfsCollection = collection(db, 'pdfs');
-  //     const pdfData = await getDocs(pdfsCollection);
-  //     const pdfsArray = pdfData.docs.map((doc) => ({
-  //       id: doc.id,
-  //       group: doc.data().group,
-  //     }));
-  //     return pdfsArray;
-  //   } catch (error) {
-  //     console.error('Error fetching PDF groups:', error);
-  //     return [];
-  //   }
-  // };
-
-  const Unauthorized = () => {
-    toast.error("Unauthorized!!!", {
-      position: toast.POSITION.TOP_CENTER,
-    });
-  };
-  const handleToggle = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const Unverified = () => {
-    //alert(localStorage.getItem("isApproved"))
-    
-    //alert("Inside unverified")
-    //alert(userData.isApproved)
-
-    
-   // alert(localStorage.getItem("email"));
-    //checkUserStatus()
-    //alert(isApproved)
-    //checkUserStatus()
-    //alert(isApproved)
-   // setIsAuth(true);
-    //setIsApproved(false);
-    //localStorage.clear();
-
-    toast.error(
-      "USER NOT APPROVED!!! Please contact with the admin to get the approval !!!",
-      {
-        position: toast.POSITION.TOP_CENTER,
-        autoClose: false,
-        theme: "colored",
-      }
-    );
-    //localStorage.clear();
-   // setIsAuth(true);
-  };
-  const Footer =()=>{
-    const location = useLocation()
-    const isViewPost = location.pathname.includes('/view')
-    return(
-      <>
-      {
-        isViewPost ? null :(
-          <footer className="footer">
-          <p>Copyright © SRD 2024</p>
-        </footer>
-        )
-      }
-      </>
-    )
-  }
-
-
-  const signUserOut = async () => {
-    try {
-      await Logger({ eventType: 'logout' }); //asyc because this call need to wait until the log is tracked
-  
-       signOut(auth);
-
-      // setIsAuth(false);
-  setIsApproved(false);
-    //localStorage.removeItem("isAuth");
-    localStorage.removeItem("isApproved");
-    localStorage.removeItem("email")
-  
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.pathname = "/";
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-
+  /*
+   * Check user status and approval
+   */
   const checkUserStatus = async () => {
-    //alert("checking")
-    //alert(email)
-    //alert("checking")
     try {
       const userDocRef = collection(db, process.env.REACT_APP_ADMIN_USERS);
+
       const getUserDocs = await getDocs(userDocRef);
-      console.log("userdocccccccccccccccccccccccs")
-      console.log(getUserDocs)
+
       let userData = null;
-      const email = localStorage.getItem("email")
-      //alert(email)
-  
+
+      const currentEmail = localStorage.getItem("email");
+
       getUserDocs.forEach((doc) => {
-        if (doc.data().email === email) {
+        if (doc.data().email === currentEmail) {
           userData = doc.data();
         }
       });
-     //alert("see user data in console")
-      console.log(userData)
-      //alert(email)
-  
+
       if (userData) {
-        
-        //alert("user data is present")
-        //alert(userData.isApproved)
-       // alert("present")
-        //alert("user is present")
-       // alert(user.email)
-        //alert("Yes user data")
-        //setIsAuth(true);
-       // setIsAdmin(userData.isAdmin);
-      // alert(userData.isApproved)
         setIsApproved(userData.isApproved);
-        //alert(isApproved)
-        // if (!userData.isApproved) {
-        //   Unverified();  // Show error if not approved
-        // }
       }
+
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
+
       setLoading(false);
     }
   };
-  
 
-
-  // useEffect(() => {
-  //   setIsCollapsed(true);
-  // }, [isAuth, isApproved]);
-  
-
+  /*
+   * Get currently authenticated user's username
+   */
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUsername(user.displayName || user.email);
+      } else {
+        setUsername("");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  /*
+   * Check admin and approval status
+   */
+  useEffect(() => {
+    const checkUserAdminStatus = async () => {
       try {
         const userDocRef = collection(db, process.env.REACT_APP_ADMIN_USERS);
+
         const getUserDocs = await getDocs(userDocRef);
+
         let userData = null;
-  
+
         getUserDocs.forEach((doc) => {
           if (doc.data().email === email) {
             userData = doc.data();
           }
         });
 
-        console.log("**************************1111");
-        console.log("**************************22222");
-  
         if (userData) {
-          //alert("Inside user data")
-         // setIsAuth(true);
           setisAdmin(userData.isAdmin);
+
           setIsApproved(userData.isApproved);
-          console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-          console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-          console.log(isApproved)
-         // console.log(isAuth)
         }
-  
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching user data:", error);
+
         setLoading(false);
       }
     };
-  
+
     if (email) {
-      checkUserStatus();
+      checkUserAdminStatus();
     } else {
       setLoading(false);
     }
   }, [email]);
-  
 
-  // useEffect(() => {
-  //   let timer;
-  //   const userSession = () => {
-  //     timer = setTimeout(() => updateIsActive(), aceessTimer);
-  //   };
-  //   userSession(); 
-  //   return () => {
-  //     clearTimeout(timer); 
-  //   };
-  // }, [aceessTimer, updateIsActive]);
-  
-  // useEffect(() => {
-  //   const worker = new Worker(URL.createObjectURL(new Blob([`
-  //     self.onmessage = function(e) {
-  //       setTimeout(function() {
-  //         self.postMessage('Time is up!');
-  //       }, e.data);
-  //     }
-  //   `], { type: 'text/javascript' })));
+  /*
+   * Toggle mobile navbar
+   */
+  const handleToggle = () => {
+    setIsCollapsed(!isCollapsed);
+  };
 
-  //   worker.onmessage = function(e) {
-  //     console.log(e.data); // 'Time is up!'
-  //     updateIsActive(); // Call your function when the timer is up
-  //   };
+  /*
+   * Unauthorized message
+   */
+  const Unauthorized = () => {
+    toast.error("Unauthorized!!!", {
+      position: toast.POSITION.TOP_CENTER,
+    });
+  };
 
-  //   worker.postMessage(aceessTimer); // Start the timer
+  /*
+   * Unverified user message
+   */
+  const Unverified = () => {
+    toast.error(
+      "USER NOT APPROVED!!! Please contact with the admin to get the approval !!!",
+      {
+        position: toast.POSITION.TOP_CENTER,
 
-  //   return () => {
-  //     worker.terminate(); // Terminate the worker when the component unmounts
-  //   };
-  // }, [aceessTimer, updateIsActive]);
+        autoClose: false,
 
+        theme: "colored",
+      }
+    );
+  };
+
+  /*
+   * Footer
+   */
+  const Footer = () => {
+    const location = useLocation();
+
+    const isViewPost = location.pathname.includes("/view");
+
+    return (
+      <>
+        {isViewPost ? null : (
+          <footer className="footer">
+            <p>Copyright © SRD 2024</p>
+          </footer>
+        )}
+      </>
+    );
+  };
+
+  /*
+   * ==========================================
+   * LOGOUT MODAL
+   * ==========================================
+   */
+
+  /*
+   * Open logout confirmation modal
+   */
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  /*
+   * Close logout confirmation modal
+   */
+  const handleCloseLogout = () => {
+    setShowLogoutModal(false);
+  };
+
+  /*
+   * User confirmed logout
+   */
+  const handleConfirmLogout = () => {
+    setShowLogoutModal(false);
+
+    signUserOut(true);
+  };
+
+  /*
+   * Sign user out
+   *
+   * manualLogout = true
+   * means the user manually clicked Log Out.
+   *
+   * manualLogout = false
+   * means automatic inactivity logout.
+   */
+  const signUserOut = async (manualLogout = false) => {
+    try {
+      /*
+       * Save logout event
+       */
+      await Logger({
+        eventType: "logout",
+      });
+
+      /*
+       * Sign out from Firebase
+       */
+      await signOut(auth);
+
+      /*
+       * Update React authentication state
+       */
+      setIsApproved(false);
+
+      setIsAuth(false);
+
+      setisAdmin(false);
+
+      setUsername("");
+
+      /*
+       * Clear browser storage
+       */
+      localStorage.clear();
+
+      sessionStorage.clear();
+
+      /*
+       * Manual logout
+       */
+      if (manualLogout) {
+        toast.success("Logged out successfully!", {
+          position: toast.POSITION.TOP_CENTER,
+
+          autoClose: 2000,
+
+          hideProgressBar: true,
+
+          closeOnClick: true,
+
+          pauseOnHover: true,
+
+          draggable: true,
+
+          theme: "light",
+        });
+
+        /*
+         * Allow the toast to be visible
+         * before redirecting.
+         */
+        setTimeout(() => {
+          window.location.pathname = "/";
+        }, 2000);
+      } else {
+        /*
+         * Automatic inactivity logout.
+         *
+         * No "Logged out successfully"
+         * toast is shown.
+         */
+        window.location.pathname = "/";
+      }
+    } catch (error) {
+      console.error("Error signing out:", error);
+
+      /*
+       * Show logout error to user
+       */
+      toast.error("Unable to log out. Please try again.", {
+        position: toast.POSITION.TOP_CENTER,
+
+        autoClose: 3000,
+
+        hideProgressBar: true,
+
+        closeOnClick: true,
+
+        pauseOnHover: true,
+
+        draggable: true,
+
+        theme: "light",
+      });
+    }
+  };
+
+  /*
+   * Automatic logout based on inactivity
+   */
   useEffect(() => {
     let timer;
+
     const handleUserActivity = () => {
       clearTimeout(timer);
+
       timer = setTimeout(() => signUserOut(), AUTO_LOGOUT_TIME);
     };
+
     document.addEventListener("mousemove", handleUserActivity);
+
     document.addEventListener("keydown", handleUserActivity);
 
+    /*
+     * Start timer immediately.
+     */
+    handleUserActivity();
+
     return () => {
+      clearTimeout(timer);
+
       document.removeEventListener("mousemove", handleUserActivity);
+
       document.removeEventListener("keydown", handleUserActivity);
     };
   }, [AUTO_LOGOUT_TIME]);
 
+  /*
+   * Loading state
+   */
   if (loading) {
-    return <div></div>; // Render loading state while checking admin status
+    return <div></div>;
   }
 
- {return (
-  <>
-    <nav className="navbar navbar-expand-md navbar-dark bg-dark" style={{ position: 'fixed' }}>
-      <div className="container-fluid">
-        <div className="logo" style={{ position: "absolute", top: "1px" }}>
-          <img src="/secure.png" alt="Secure Logo" height="50px" width="50px" />
+  return (
+    <>
+      {/* ======================================
+          NAVBAR
+          ====================================== */}
+
+      <nav
+        className="navbar navbar-expand-md navbar-dark bg-dark"
+        style={{ position: "fixed" }}
+      >
+        <div className="container-fluid">
+          <div
+            className="logo"
+            style={{
+              position: "absolute",
+              top: "1px",
+            }}
+          >
+            <img
+              src="/secure.png"
+              alt="Secure Logo"
+              height="50px"
+              width="50px"
+            />
+          </div>
+
+          <Link
+            className="navbar-brand"
+            to="/"
+            style={{
+              marginLeft: "55px",
+              color: "orange",
+            }}
+            onClick={handleToggle}
+          >
+            E-Lib
+          </Link>
+
+          <button
+            className="navbar-toggler"
+            style={{
+              paddingBottom: "20px",
+            }}
+            type="button"
+            onClick={handleToggle}
+            aria-expanded={!isCollapsed}
+            aria-label="Toggle navigation"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+
+          <div
+            className={`bg-dark collapse navbar-collapse${
+              isCollapsed ? "" : " show"
+            }`}
+            id="navbarNavAltMarkup"
+          >
+            <div className="bg-dark navbar-nav ms-auto">
+              {/* HOME */}
+
+              <Link
+                to="/"
+                className="nav-link"
+                aria-current="page"
+                onClick={handleToggle}
+              >
+                Home
+              </Link>
+
+              {/* FEATURED ARTICLE */}
+
+              <Link to="/posts" className="nav-link" onClick={handleToggle}>
+                Featured Article
+              </Link>
+
+              {/* AUTHENTICATED USER */}
+
+              {isAuth ? (
+                <>
+                  {isApproved && (
+                    <>
+                      {/* ADMIN LINKS */}
+
+                      {isAdmin && (
+                        <>
+                          <Link
+                            to="/createpost"
+                            className="nav-link"
+                            onClick={handleToggle}
+                          >
+                            Create Post
+                          </Link>
+
+                          <Link
+                            to="/admindashboard"
+                            className="nav-link"
+                            onClick={handleToggle}
+                          >
+                            Admin
+                          </Link>
+                        </>
+                      )}
+
+                      {/* TEAM */}
+
+                      <Link
+                        to="/team"
+                        className="nav-link"
+                        onClick={handleToggle}
+                      >
+                        Team
+                      </Link>
+
+                      {/* ARTICLE LIST */}
+
+                      <Link
+                        to="/articleList"
+                        className="nav-link"
+                        onClick={handleToggle}
+                      >
+                        Article List
+                      </Link>
+
+                      {/* PDF DROPDOWN */}
+
+                      <Link className="nav-link">
+                        <DropdownComponent />
+                      </Link>
+
+                      {/* CATEGORY DROPDOWN */}
+
+                      <Link className="nav-link">
+                        <CategoryDropdownComponent />
+                      </Link>
+
+                      {/* ==========================
+                          USER PROFILE DROPDOWN
+                          ========================== */}
+
+                      <div className="nav-item dropdown">
+                        <button
+                          className="nav-link dropdown-toggle btn btn-link"
+                          id="profileDropdown"
+                          type="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                          style={{
+                            cursor: "pointer",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {username}
+                        </button>
+
+                        <ul
+                          className="dropdown-menu dropdown-menu-end"
+                          aria-labelledby="profileDropdown"
+                        >
+                          <li>
+                            <Link
+                              className="dropdown-item"
+                              to="/profile"
+                              onClick={handleToggle}
+                            >
+                              Profile
+                            </Link>
+                          </li>
+
+                          <li>
+                            <hr className="dropdown-divider" />
+                          </li>
+
+                          <li>
+                            <button
+                              type="button"
+                              className="dropdown-item"
+                              onClick={handleLogout}
+                              style={{
+                                cursor: "pointer",
+                              }}
+                            >
+                              Log Out
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : null}
+
+              {/* LOGIN */}
+
+              {!isAuth || !isApproved ? (
+                <Link to="/login" className="nav-link" onClick={handleToggle}>
+                  Login
+                </Link>
+              ) : null}
+            </div>
+          </div>
         </div>
-        <Link className="navbar-brand" to="/" style={{ marginLeft: "55px", color: "orange" }}>
-          E-Lib
-        </Link>
+      </nav>
 
-        <button
-          className="navbar-toggler"
-          style={{ paddingBottom: "20px" }}
-          type="button"
-          onClick={handleToggle}
-          aria-expanded={!isCollapsed}
-          aria-label="Toggle navigation"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div
-          className={`bg-dark collapse navbar-collapse${isCollapsed ? "" : " show"}`}
-          id="navbarNavAltMarkup"
-        >
-          <div onClick={handleToggle} className="bg-dark navbar-nav ms-auto">
-            <Link to="/" className="nav-link" aria-current="page">
-              Home
-            </Link>
+      {/* ======================================
+          LOGOUT CONFIRMATION MODAL
+          ====================================== */}
 
-            <Link to="/posts" className="nav-link">
-              Featured Article
-            </Link>
+      <Modal
+        show={showLogoutModal}
+        onHide={handleCloseLogout}
+        centered
+        dialogClassName="logout-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Logout</Modal.Title>
+        </Modal.Header>
 
-            {isAuth ? (
-              <>
-                {isApproved && (
+        <Modal.Body>Are you sure you want to log out?</Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseLogout}>
+            Cancel
+          </Button>
+
+          <Button variant="danger" onClick={handleConfirmLogout}>
+            Log Out
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ======================================
+          TOAST NOTIFICATIONS
+          ====================================== */}
+
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        theme="colored"
+        hideProgressBar={true}
+        closeOnClick={true}
+      />
+
+      {/* ======================================
+          ROUTES
+          ====================================== */}
+
+      {isAuth ? (
+        <>
+          {isApproved ? (
+            <Routes>
+              <Route
+                path="/login"
+                element={<PdfViewerPage setIsAuth={setIsAuth} />}
+              />
+
+              <Route path="/signup" element={<SignUp />} />
+
+              <Route path="/" element={<Landing isAuth={isAuth} />} />
+
+              <Route path="/team" element={<Team isAuth={isAuth} />} />
+
+              <Route
+                path="/pdfList"
+                element={<PdfList isAuth={isAuth} isApproved={isApproved} />}
+              />
+
+              <Route
+                path="/articleList"
+                element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />}
+              />
+
+              <Route
+                path="/categorypdfList"
+                element={<CategoryPdfList isAuth={isAuth} />}
+              />
+
+              <Route path="/posts" element={<Posts isAuth={isAuth} />} />
+
+              <Route path="/view" element={<ViewPost />} />
+
+              <Route path="/viewLogs" element={<ViewLogs />} />
+
+              {isAdmin ? (
+                <>
+                  <Route
+                    path="/createpost"
+                    element={<CreatePost isAuth={isAuth} />}
+                  />
+
+                  <Route
+                    path="/admindashboard"
+                    element={<Admin isAuth={isAuth} />}
+                  />
+                </>
+              ) : (
+                <Route path="/createpost" element={<Unauthorized />} />
+              )}
+            </Routes>
+          ) : (
+            <Routes>
+              <Route
+                path="/"
+                element={
                   <>
-                    {isAdmin && (
-                      <>
-                        <Link to="/createpost" className="nav-link">
-                          Create Post
-                        </Link>
-                        <Link to="/admindashboard" className="nav-link">
-                          Admin
-                        </Link>
-                      </>
-                    )}
+                    <Landing isAuth={isAuth} />
 
-                    <Link to="/team" className="nav-link">
-                      Team
-                    </Link>
-
-                    <Link to="/articleList" className="nav-link">
-                  Article List
-                </Link>
-
-                
-                <Link className="nav-link">
-                  <DropdownComponent />
-                </Link>
-
-                <Link className="nav-link">
-                  <CategoryDropdownComponent />
-                </Link>
-
-                <Link
-                  className="nav-link"
-                  onClick={signUserOut}
-                  style={{ cursor: "pointer" }}
-                >
-                  Log Out
-                </Link>
+                    <Unverified />
                   </>
-                )}
+                }
+              />
 
+              <Route
+                path="/team"
+                element={
+                  <>
+                    <Team isAuth={isAuth} />
 
-                {/* <Link to="/articleList" className="nav-link">
-                  Article List
-                </Link> */}
+                    <Unverified />
+                  </>
+                }
+              />
 
-                {/* <Link
-                  className="nav-link"
-                  onClick={signUserOut}
-                  style={{ cursor: "pointer" }}
-                >
-                  Log Out
-                </Link> */}
-              </>
-            ) :  (
-              null
-            )}   
+              <Route
+                path="/articleList"
+                element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />}
+              />
 
+              <Route
+                path="/pdfList"
+                element={
+                  <>
+                    <PdfList isAuth={isAuth} />
 
+                    <Unverified />
+                  </>
+                }
+              />
 
-  {isAuth && isApproved ? null : (
-    <Link to="/login" className="nav-link">
-      Login
-    </Link>
-  )}
+              <Route
+                path="/posts"
+                element={
+                  <>
+                    <Navigate to="/login" />
 
-         
-</div>
-        </div>
-      </div>
-    </nav>
+                    <Unverified />
+                  </>
+                }
+              />
 
-    <ToastContainer
-      position="top-center"
-      autoClose={3000}
-      theme="colored"
-      hideProgressBar={true}
-      closeOnClick={true}
-    />
+              <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
+            </Routes>
+          )}
+        </>
+      ) : (
+        <Routes>
+          <Route path="/signup" element={<SignUp />} />
 
-    {isAuth ? (
-      <>
-        {isApproved ? (
-          <Routes>
-            <Route path="/login" element={<PdfViewerPage setIsAuth={setIsAuth} />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/" element={<Landing isAuth={isAuth} />} />
-            <Route path="/team" element={<Team isAuth={isAuth} />} />
-            <Route path="/pdfList" element={<PdfList isAuth={isAuth} isApproved={isApproved} />} />
-            <Route path="/articleList" element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />} />
-            <Route path="/categorypdfList" element={<CategoryPdfList isAuth={isAuth} />} />
-            <Route path="/posts" element={<Posts isAuth={isAuth}  />} />
-            <Route path="/view" element={<ViewPost />} />
-            <Route path="/viewLogs" element={<ViewLogs />} />
-            {isAdmin ? (
-              <>
-                <Route path="/createpost" element={<CreatePost isAuth={isAuth} />} />
-                <Route path="/admindashboard" element={<Admin isAuth={isAuth} />} />
-              </>
-            ) : (
-              <Route path="/createpost" element={<Unauthorized />} />
-            )}
-          </Routes>
-        ) : (
-          <Routes>
-            <Route path="/" element={<><Landing isAuth={isAuth} /><Unverified /></>} />
-            <Route path="/team" element={<><Team isAuth={isAuth} /><Unverified /></>} />
-            <Route path="/articleList" element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />} />
-            <Route path="/pdfList" element={<><PdfList isAuth={isAuth} /><Unverified /></>} />
-            <Route path="/posts" element={<><Navigate to="/login" /><Unverified /></>} />
-            <Route path="/login" element={<><Login setIsAuth={setIsAuth} /> </>} />
-          </Routes>
+          <Route path="/" element={<Landing isAuth={isAuth} />} />
 
-            
-        //   <Routes>
-        //   <Route path="/" element={<Landing isAuth={isAuth} />} />
-        //   <Route path="/team" element={<Team isAuth={isAuth} />} />
-        //   <Route path="/articleList" element={<ArticleList isAuth={isAuth} totalTime={totalTime} />} />
-        //   <Route path="/pdfList" element={<PdfList isAuth={isAuth} />} />
-        //   <Route path="/posts" element={<Navigate to="/login" />} />
-        //   <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
-        // </Routes>
-        
-        )}
-      </>
-    ) : (
-      <Routes>
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/" element={<Landing isAuth={isAuth} />} />
-        <Route path="/team" element={<Team isAuth={isAuth} />} />
-        <Route path="/pdfList" element={<PdfList isAuth={isAuth} />} />
-        <Route path="/categorypdfList" element={<CategoryPdfList isAuth={isAuth} />} />
-        <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
-        <Route path="/PdfViewerPage" element={<PdfViewerPage isAuth={isAuth} />} />
-        <Route path="/posts" element={<Posts isAuth={isAuth} isAdmin={isAdmin} />} />
-        <Route path="/view" element={<ViewPost />} />
-      </Routes>
-    )}
+          <Route path="/team" element={<Team isAuth={isAuth} />} />
 
-    <Footer />
-  </>
-);
+          <Route path="/pdfList" element={<PdfList isAuth={isAuth} />} />
+
+          <Route
+            path="/categorypdfList"
+            element={<CategoryPdfList isAuth={isAuth} />}
+          />
+
+          <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
+
+          <Route
+            path="/PdfViewerPage"
+            element={<PdfViewerPage isAuth={isAuth} />}
+          />
+
+          <Route
+            path="/posts"
+            element={<Posts isAuth={isAuth} isAdmin={isAdmin} />}
+          />
+
+          <Route path="/view" element={<ViewPost />} />
+        </Routes>
+      )}
+
+      <Footer />
+    </>
+  );
 }
-}
-
 
 export default App;
