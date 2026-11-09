@@ -15,7 +15,6 @@ import "../App.css";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
 
-
 function CreatePost(props) {
   let isEditing = false;
   let postid = "";
@@ -32,16 +31,15 @@ function CreatePost(props) {
   const [time, setTime] = useState("");
   const postCollectionRef = collection(db, process.env.REACT_APP_ADMIN_DATABSE);
   const combinedDateTime = `${edate}T${time}`;
-  const[description, setDescription] = useState('');
-  function SaveDescription (value){
+  const [description, setDescription] = useState("");
+  function SaveDescription(value) {
     setDescription(value);
   }
-  
 
   if (location && location.state && location.state.currentState) {
     isEditing = true;
     postid = location.state.id;
-    console.log(postid, "id;;;;")
+    console.log(postid, "id;;;;");
   }
 
   useEffect(() => {
@@ -98,7 +96,7 @@ function CreatePost(props) {
         progress: undefined,
         theme: "light",
       });
-      
+
       navigate("/posts");
     }
   };
@@ -123,7 +121,6 @@ function CreatePost(props) {
         password,
         date: serverTimestamp(),
         expiryDate: utcDateTime,
-
       });
       toast.success("Successfully Edited!", {
         position: "top-center",
@@ -135,7 +132,7 @@ function CreatePost(props) {
         progress: undefined,
         theme: "light",
       });
-     
+
       navigate("/posts");
     }
   };
@@ -197,8 +194,12 @@ function CreatePost(props) {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <div className="post-container">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-5"
+        style={{ minHeight: "90%" }}
+      >
+        <div className="post-container mt-6">
           <div className="post-box">
             <h1 className="post-title">
               {isEditing ? "Edit Post" : "Create A Post"}
@@ -226,7 +227,6 @@ function CreatePost(props) {
                 value={postText}
                 onChange={(event) => {
                   setPostText(event.target.value);
-                  
                 }}
               />
             </div>
@@ -288,7 +288,7 @@ function CreatePost(props) {
             </div>
             <br />
             <br />
-            <button className="btn btn-primary" type="submit" >
+            <button className="btn btn-primary" type="submit">
               {isEditing ? "Save" : "Post"}
             </button>
           </div>
@@ -300,4 +300,6 @@ function CreatePost(props) {
 
 export default CreatePost;
 
-{/* <Page pageNumber={pageNumber}/> */}
+{
+  /* <Page pageNumber={pageNumber}/> */
+}
