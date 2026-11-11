@@ -11,7 +11,8 @@ import "./Landing.css";
 
 function Landing({ isAuth }) {
   return (
-    <div className="landing-container">
+    <div className="landing-container ">
+      {" "}
       {/* Image Carousel */}
       <Carousel>
         <Carousel.Item>
@@ -26,7 +27,6 @@ function Landing({ isAuth }) {
           <img src={Student2} alt="Studying" />
         </Carousel.Item>
       </Carousel>
-
       {/* Main Content */}
       <Row className="display-row justify-content-center align-items-center">
         {/* About Section */}

@@ -1,55 +1,251 @@
-/* modalStyles.css */
 
-/* Set minimum height for modal body */
-.modal-body {
-    min-height: 600px; /* Increase the minimum height of the modal body */
-}
+/* ========================================
+   MODAL STYLES - RESPONSIVE
+   ======================================== */
 
-/* Increase font size and adjust spacing for modal header */
-.modal-header {
-    font-size: 2rem; /* Increase the font size of the modal header */
-    padding: 1.5rem; /* Increase the padding of the modal header */
-}
-
-/* Increase font size for modal title */
-.modal-title {
-    font-size: 2rem; /* Increase the font size of the modal title */
-}
-
-/* Increase font size for modal footer buttons */
-.modal-footer .btn {
-    font-size: 1.5rem; /* Increase the font size of the modal footer buttons */
-    padding: 0.5rem 1.5rem; /* Increase the padding of the modal footer buttons */
-}
-
-/* Set minimum width for modal dialog */
-.modal-dialog {
-    min-width: 60%; /* Increase the minimum width of the modal dialog */
-    overflow-x: auto; /* Enable horizontal scrolling if content overflows */
-}
-
-/* Adjust padding for modal content */
+/* Base modal appearance */
 .modal-content {
-    padding: 2.5rem; /* Increase the padding of the modal content */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
 }
 
-/* Adjust the size of the PDF content */
-/* .react-pdf__Page {
-    width: 2500px; 
-    height: 1200px; 
-} */
+/* Header */
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+}
 
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Body */
+.modal-body {
+  padding: 20px;
+  min-height: 0;
+}
+
+/* Footer */
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e9ecef;
+  gap: 8px;
+}
+
+.modal-footer .btn {
+  font-size: 0.9rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+
+/* ========================================
+   ADMIN SETTINGS MODALS
+   Set Time / Set Access
+   ======================================== */
+
+.admin-settings-modal {
+  width: calc(100% - 24px);
+  max-width: 420px;
+  margin: 16px auto;
+}
+
+.admin-settings-modal .modal-content {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.admin-settings-modal .modal-body {
+  height: auto;
+  min-height: 0;
+  padding: 20px;
+}
+
+.admin-settings-modal .modal-body p {
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.admin-settings-modal .form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.admin-settings-modal .form-control,
+.admin-settings-modal .form-select {
+  width: 100%;
+  min-height: 40px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+
+.admin-settings-modal .form-text {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+/* ========================================
+   RESTRICTED PDF VIEWER
+   ======================================== */
+
+.custom-pdf-modal {
+  --bs-modal-width: 1100px;
+}
+
+.custom-pdf-modal .modal-dialog {
+  width: calc(100% - 32px);
+  max-width: 1100px;
+  margin: 16px auto;
+}
+
+.custom-pdf-modal .modal-content {
+  height: auto;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-pdf-modal .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* React PDF document */
+.custom-pdf-modal .pdf-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* PDF pages */
+.custom-pdf-modal .react-pdf__Page {
+  max-width: 100%;
+}
+
+.custom-pdf-modal .react-pdf__Page canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  margin: 0 auto;
+}
+
+/* ========================================
+   UNRESTRICTED PDF VIEWER
+   ======================================== */
+
+.pdf-modal-dialog {
+  width: calc(100% - 32px);
+  max-width: 1100px;
+  margin: 16px auto;
+}
+
+.pdf-modal-dialog .modal-content {
+  height: min(850px, calc(100dvh - 32px));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-modal-dialog .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
 .pdf-modal-iframe {
-    width: 100%;
-    height: 800px;
-    border: none;
-    font-size: 16px;
-  }
-
-  /* For the react pdf */
-  .pdf-content {
-  width: 5;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: none;
 }
 
-  
+/* ========================================
+   TABLET
+   ======================================== */
+
+@media (max-width: 768px) {
+  .admin-settings-modal {
+    max-width: 400px;
+  }
+
+  .custom-pdf-modal .modal-dialog,
+  .pdf-modal-dialog {
+    width: calc(100% - 20px);
+    margin: 10px auto;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .custom-pdf-modal .modal-content,
+  .pdf-modal-dialog .modal-content {
+    max-height: calc(100dvh - 20px);
+  }
+}
+
+/* ========================================
+   MOBILE
+   ======================================== */
+
+@media (max-width: 480px) {
+  .admin-settings-modal {
+    width: calc(100% - 24px);
+    max-width: none;
+    margin: 12px auto;
+  }
+
+  .admin-settings-modal .modal-content {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .admin-settings-modal .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer .btn {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .custom-pdf-modal .modal-dialog,
+  .pdf-modal-dialog {
+    width: calc(100% - 12px);
+    margin: 6px auto;
+  }
+
+  .custom-pdf-modal .modal-content,
+  .pdf-modal-dialog .modal-content {
+    max-height: calc(100dvh - 12px);
+  }
+
+  .custom-pdf-modal .modal-body {
+    padding: 8px;
+  }
+}

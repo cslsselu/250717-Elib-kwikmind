@@ -580,11 +580,13 @@ function App() {
                           className="nav-link dropdown-toggle btn btn-link"
                           id="profileDropdown"
                           type="button"
+                          
                           data-bs-toggle="dropdown"
                           aria-expanded="false"
                           style={{
                             cursor: "pointer",
                             textDecoration: "none",
+                            border:"none"
                           }}
                         >
                           {username}
