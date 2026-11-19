@@ -46,6 +46,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import "./auth/create-admin";
+import ArticleManagement from "./pages/ArticleList";
+import CategoryArticles from "./pages/categoryPdfList";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -580,13 +582,12 @@ function App() {
                           className="nav-link dropdown-toggle btn btn-link"
                           id="profileDropdown"
                           type="button"
-                          
                           data-bs-toggle="dropdown"
                           aria-expanded="false"
                           style={{
                             cursor: "pointer",
                             textDecoration: "none",
-                            border:"none"
+                            border: "none",
                           }}
                         >
                           {username}
@@ -700,18 +701,16 @@ function App() {
               <Route path="/team" element={<Team isAuth={isAuth} />} />
 
               <Route
-                path="/pdfList"
-                element={<PdfList isAuth={isAuth} isApproved={isApproved} />}
-              />
-
-              <Route
                 path="/articleList"
-                element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />}
+                element={
+                  <ArticleManagement managementMode={true} filterMode="all" />
+                }
               />
 
+              <Route path="/pdfList" element={<PdfList filterMode="group" />} />
               <Route
                 path="/categorypdfList"
-                element={<CategoryPdfList isAuth={isAuth} />}
+                element={<CategoryArticles filterMode="category" />}
               />
 
               <Route path="/posts" element={<Posts isAuth={isAuth} />} />
@@ -758,11 +757,6 @@ function App() {
                     <Unverified />
                   </>
                 }
-              />
-
-              <Route
-                path="/articleList"
-                element={<ArticleList isAuth={isAuth} totalTime={pdfTimer} />}
               />
 
               <Route
