@@ -73,6 +73,7 @@ export default function PdfList({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [showAddBook, setShowAddBook] = useState(false);
+  const [showUpdateBook, setShowUpdateBook] = useState(false);
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [bookGroup, setBookGroup] = useState("");
@@ -657,6 +658,156 @@ export default function PdfList({
     }
   };
 
+  const updateBook = async (e) => {
+    e.preventDefault();
+
+    if (uploading || !selectedPdf) return;
+
+    const title = bookTitle.trim();
+    const author = bookAuthor.trim();
+    const group = bookGroup.trim();
+    const minutes = Number(bookMinutes);
+
+    if (!title) {
+      setUploadError("Enter a book title.");
+      return;
+    }
+
+    if (
+      bookFile &&
+      bookFile.type !== "application/pdf" &&
+      !bookFile.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setUploadError("Please select a valid PDF file.");
+      return;
+    }
+
+    if (
+      bookAccess === "restricted" &&
+      (!Number.isInteger(minutes) || minutes < 1 || minutes > MAX_MINUTES)
+    ) {
+      setUploadError("Reading time must be between 1 and 180 minutes.");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError("");
+    setUploadProgress(0);
+
+    let newStorageRef = null;
+    let uploaded = false;
+    let saved = false;
+
+    try {
+      await verifyAdmin();
+
+      let url = selectedPdf.url;
+
+      // Upload a new PDF only if one was selected
+      if (bookFile) {
+        const uniqueName = `${Date.now()}-${newSessionId()}.pdf`;
+
+        newStorageRef = ref(storage, `pdfs/${uniqueName}`);
+
+        const task = uploadBytesResumable(newStorageRef, bookFile, {
+          contentType: "application/pdf",
+        });
+
+        await new Promise((resolve, reject) => {
+          task.on(
+            "state_changed",
+            (snapshot) => {
+              setUploadProgress(
+                Math.round(
+                  (100 * snapshot.bytesTransferred) / snapshot.totalBytes
+                )
+              );
+            },
+            reject,
+            resolve
+          );
+        });
+
+        uploaded = true;
+        url = await getDownloadURL(newStorageRef);
+      }
+
+      const updatedData = {
+        title,
+        Author: author,
+        group,
+        categories: bookCategories
+          .split(",")
+          .map((category) => category.trim())
+          .filter(Boolean),
+        url,
+        access: bookAccess,
+        maxReadingMinutes:
+          bookAccess === "restricted" ? minutes : DEFAULT_MINUTES,
+        updatedAt: serverTimestamp(),
+      };
+
+      // Update existing Firestore document
+      await updateDoc(doc(db, "pdfs", selectedPdf.id), updatedData);
+
+      saved = true;
+
+      // Update local state
+      setPdfs((old) =>
+        old.map((pdf) =>
+          pdf.id === selectedPdf.id ? { ...pdf, ...updatedData } : pdf
+        )
+      );
+
+      setShowUpdateBook(false);
+      setSelectedPdf(null);
+      resetBookForm();
+
+      setMessage("Book updated successfully.");
+
+      // Remove the old PDF only after Firestore update succeeds
+      if (bookFile && selectedPdf.url) {
+        try {
+          const oldStorageRef = ref(storage, selectedPdf.url);
+          await deleteObject(oldStorageRef);
+        } catch (cleanupError) {
+          console.warn("Old PDF could not be deleted:", cleanupError);
+        }
+      }
+    } catch (err) {
+      console.error("Book update failed:", err);
+
+      // Delete newly uploaded file if Firestore update failed
+      if (!saved && uploaded && newStorageRef) {
+        try {
+          await deleteObject(newStorageRef);
+        } catch (cleanupError) {
+          console.error("New PDF cleanup failed:", cleanupError);
+        }
+      }
+
+      setUploadError(err.message || "Unable to update book.");
+    } finally {
+      setUploading(false);
+    }
+  };
+  const openUpdateBook = (pdf) => {
+    if (!managementMode || !isAdmin || checkingAdmin) return;
+
+    setSelectedPdf(pdf);
+
+    setBookTitle(pdf.title || "");
+    setBookAuthor(pdf.Author || "");
+    setBookGroup(pdf.group || "");
+    setCategories((pdf.categories || []).join(", "));
+    setBookAccess(pdf.access || "restricted");
+    setBookMinutes(pdf.maxReadingMinutes || DEFAULT_MINUTES);
+    setBookFile(null);
+
+    setUploadError("");
+    setUploadProgress(0);
+    setShowUpdateBook(true);
+  };
   const openTime = (pdf) => {
     if (!isAdmin || checkingAdmin) return;
     setSelectedPdf(pdf);
@@ -831,6 +982,14 @@ export default function PdfList({
                             >
                               Set Access
                             </Button>
+
+                            <Button
+                              size="sm"
+                              variant="outline-secondary"
+                              onClick={() => openUpdateBook(pdf)}
+                            >
+                              Edit Book
+                            </Button>
                           </div>
                         </td>
                       )}
@@ -868,18 +1027,22 @@ export default function PdfList({
 
       {showAdminControls && (
         <Modal
-          show={showAddBook}
+          show={showAddBook || showUpdateBook}
           onHide={() => {
             if (!uploading) {
               setShowAddBook(false);
+              setShowUpdateBook(false);
+              setSelectedPdf(null);
               resetBookForm();
             }
           }}
           centered
         >
-          <Form onSubmit={uploadBook}>
+          <Form onSubmit={showUpdateBook ? updateBook : uploadBook}>
             <Modal.Header closeButton={!uploading}>
-              <Modal.Title>Add Book</Modal.Title>
+              <Modal.Title>
+                {showUpdateBook ? "Update Book" : "Add Book"}
+              </Modal.Title>{" "}
             </Modal.Header>
             <Modal.Body>
               {uploadError && <Alert variant="danger">{uploadError}</Alert>}
@@ -982,7 +1145,11 @@ export default function PdfList({
                 Cancel
               </Button>
               <Button type="submit" variant="primary" disabled={uploading}>
-                {uploading ? `Uploading ${uploadProgress}%` : "Upload Book"}
+                {uploading
+                  ? `Saving ${uploadProgress}%`
+                  : showUpdateBook
+                  ? "Update Book"
+                  : "Upload Book"}
               </Button>
             </Modal.Footer>
           </Form>
