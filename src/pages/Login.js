@@ -18,7 +18,7 @@ import {
   where,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
-import Logger from './Logger';
+import Logger from "./Logger";
 
 function Login({ setIsAuth }) {
   const [email, setEmail] = useState("");
@@ -30,7 +30,7 @@ function Login({ setIsAuth }) {
   const signInWithGoogle = () => {
     signInWithPopup(auth, provider)
       .then(async (userCredential) => {
-        Logger({ eventType: 'login'});
+        Logger({ eventType: "login" });
         setIsAuth(true);
         localStorage.setItem("isAuth", true);
 
@@ -71,26 +71,26 @@ function Login({ setIsAuth }) {
   const signIn = (e) => {
     e.preventDefault();
 
-    signInWithEmailAndPassword(auth, email, password)
+    signInWithEmailAndPassword(auth, email, password, name)
       .then(async (userCredential) => {
-        console.log({userCredential});
-       // alert("hello")
+        console.log({ userCredential });
+        // alert("hello")
         if (!userCredential.user.emailVerified) {
           toast.error("Unverified user. Please check your email.");
           sendEmailVerification(auth.currentUser);
         } else {
-          
-          
-          localStorage.setItem("email", userCredential.user.email)
+          localStorage.setItem("email", userCredential.user.email);
           setIsAuth(true);
           localStorage.setItem("isAuth", true);
           localStorage.setItem("uid", userCredential.user.uid);
-          console.log(userCredential.user.email)
+          localStorage.setItem("name", userCredential.user.name);
+
+          console.log(userCredential.user.email);
           //alert("inside else")
           //navigate("/login");
           // Logger({ eventType: 'login'});
         }
-        const name = userCredential.user.displayName;
+        //const name = userCredential.user.displayName;
         const email = userCredential.user.email;
         const id = userCredential.user.uid;
         const date = serverTimestamp();
@@ -103,15 +103,15 @@ function Login({ setIsAuth }) {
           await updateDoc(docRef, {
             id,
             date,
-            name,
             email,
+            
           });
         } else {
           await addDoc(postCollectionRef, {
             id,
             date,
-            name,
             email,
+            name,
             isAdmin: false,
             isApproved: false,
           });
@@ -119,7 +119,6 @@ function Login({ setIsAuth }) {
         navigate("/posts");
       })
 
-      
       .catch((error) => {
         toast.error(error.code.replace("auth/", ""));
       });
