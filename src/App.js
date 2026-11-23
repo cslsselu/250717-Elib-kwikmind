@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 
 import { Button, Modal } from "react-bootstrap";
 
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { signOut, onAuthStateChanged, deleteUser } from "firebase/auth";
 
 import { collection, getDocs } from "firebase/firestore";
 
@@ -46,6 +46,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import "./auth/create-admin";
+import { useAuth } from "./auth/useAuth";
 import ArticleManagement from "./pages/ArticleList";
 import CategoryArticles from "./pages/categoryPdfList";
 
@@ -55,6 +56,11 @@ function App() {
   const postId = sessionStorage.getItem("postId");
 
   const navigate = useNavigate();
+
+  /*
+   * Guest (Firebase anonymous) session info from AuthProvider
+   */
+  const { isGuest, loading: authLoading } = useAuth();
 
   const AUTO_LOGOUT_TIME = 60 * 30 * 10000;
 
@@ -319,6 +325,20 @@ function App() {
       });
 
       /*
+       * Guest accounts are throwaway anonymous users.
+       * Delete them on logout so they don't pile up in Firebase Auth.
+       */
+      const currentUser = auth.currentUser;
+
+      if (currentUser?.isAnonymous) {
+        try {
+          await deleteUser(currentUser);
+        } catch (error) {
+          console.warn("Could not delete guest account:", error);
+        }
+      }
+
+      /*
        * Sign out from Firebase
        */
       await signOut(auth);
@@ -434,7 +454,7 @@ function App() {
   /*
    * Loading state
    */
-  if (loading) {
+  if (loading || authLoading) {
     return <div></div>;
   }
 
@@ -515,7 +535,78 @@ function App() {
 
               {/* AUTHENTICATED USER */}
 
-              {isAuth ? (
+              {/* GUEST USER */}
+
+              {isAuth && isGuest ? (
+                <>
+                  <Link
+                    to="/articleList"
+                    className="nav-link"
+                    onClick={handleToggle}
+                  >
+                    Article List
+                  </Link>
+
+                  <Link className="nav-link">
+                    <DropdownComponent />
+                  </Link>
+
+                  <Link className="nav-link">
+                    <CategoryDropdownComponent />
+                  </Link>
+
+                  <div className="nav-item dropdown">
+                    <button
+                      className="nav-link dropdown-toggle btn btn-link"
+                      id="guestDropdown"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      style={{
+                        cursor: "pointer",
+                        textDecoration: "none",
+                        border: "none",
+                      }}
+                    >
+                      Guest
+                    </button>
+
+                    <ul
+                      className="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="guestDropdown"
+                    >
+                      <li>
+                        <Link
+                          className="dropdown-item"
+                          to="/login"
+                          onClick={handleToggle}
+                        >
+                          Sign in / Create account
+                        </Link>
+                      </li>
+
+                      <li>
+                        <hr className="dropdown-divider" />
+                      </li>
+
+                      <li>
+                        <button
+                          type="button"
+                          className="dropdown-item"
+                          onClick={handleLogout}
+                          style={{
+                            cursor: "pointer",
+                          }}
+                        >
+                          Exit Guest Mode
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              ) : null}
+
+              {isAuth && !isGuest ? (
                 <>
                   {isApproved && (
                     <>
@@ -632,7 +723,7 @@ function App() {
 
               {/* LOGIN */}
 
-              {!isAuth || !isApproved ? (
+              {!isGuest && (!isAuth || !isApproved) ? (
                 <Link to="/login" className="nav-link" onClick={handleToggle}>
                   Login
                 </Link>
@@ -685,7 +776,35 @@ function App() {
           ROUTES
           ====================================== */}
 
-      {isAuth ? (
+      {isAuth && isGuest ? (
+        <Routes>
+          <Route path="/" element={<Landing isAuth={isAuth} />} />
+
+          <Route path="/team" element={<Team isAuth={isAuth} />} />
+
+          <Route path="/posts" element={<Posts isAuth={isAuth} />} />
+
+          <Route path="/view" element={<ViewPost />} />
+
+          <Route
+            path="/articleList"
+            element={<ArticleManagement filterMode="all" />}
+          />
+
+          <Route path="/pdfList" element={<PdfList filterMode="group" />} />
+
+          <Route
+            path="/categorypdfList"
+            element={<CategoryArticles filterMode="category" />}
+          />
+
+          <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
+
+          <Route path="/signup" element={<SignUp />} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      ) : isAuth ? (
         <>
           {isApproved ? (
             <Routes>

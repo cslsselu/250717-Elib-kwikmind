@@ -132,7 +132,8 @@ export default function PdfList({
       setIsAdmin(false);
       setCheckingAdmin(true);
 
-      if (!user) {
+      // Signed-out visitors and guests (anonymous users) are never admins.
+      if (!user || user.isAnonymous) {
         setCheckingAdmin(false);
         return;
       }
@@ -205,7 +206,10 @@ export default function PdfList({
   const filtered = useMemo(
     () =>
       pdfs.filter((p) =>
-        `${p.title || ""} ${p.Author || ""}`
+        `${p.title || ""} 
+       ${p.Author || ""} 
+       ${Array.isArray(p.categories) ? p.categories.join(" ") : ""}
+       ${p.group || ""}`
           .toLowerCase()
           .includes(search.trim().toLowerCase())
       ),
@@ -223,7 +227,8 @@ export default function PdfList({
   // A transaction is essential: a read followed by a normal update allows races.
   const acquireLock = useCallback(async (pdfId) => {
     const user = auth.currentUser;
-    if (!user) throw new Error("Sign in to read restricted PDFs.");
+    if (!user || user.isAnonymous)
+      throw new Error("Sign in to read restricted PDFs.");
     const pdfRef = doc(db, "pdfs", pdfId);
     const sessionId = newSessionId();
     return runTransaction(db, async (tx) => {
@@ -367,6 +372,14 @@ export default function PdfList({
     }
     if (access !== "restricted") {
       setError("Unknown PDF access setting.");
+      return;
+    }
+    // Restricted PDFs lock the book for one reader at a time, so guests
+    // shouldn't be able to hold them. Ask them to sign in instead.
+    if (auth.currentUser?.isAnonymous) {
+      setError(
+        "This PDF is available to registered users only. Please sign in or create an account to read it."
+      );
       return;
     }
     setBusyPdfId(pdf.id);
@@ -922,6 +935,15 @@ export default function PdfList({
                 <th>Author</th>
                 <th>Access</th>
                 <th>Reading Time</th>
+                {managementMode === true ? (
+                  <>
+                    <th>Group</th>
+                    <th>Categories</th>
+                  </>
+                ) : (
+                  <></>
+                )}
+
                 <th>Views</th>
                 <th>View PDF</th>
                 {showAdminControls && <th>Admin Actions</th>}
@@ -952,6 +974,18 @@ export default function PdfList({
                           ? `${validMinutes(pdf.maxReadingMinutes)} min`
                           : "Unlimited"}
                       </td>
+                      {managementMode === true ? (
+                        <>
+                          <td>{pdf.group}</td>
+                          <td>
+                            {Array.isArray(pdf.categories)
+                              ? pdf.categories.join(", ")
+                              : pdf.categories || "N/A"}
+                          </td>{" "}
+                        </>
+                      ) : (
+                        <></>
+                      )}
                       <td>{pdf.viewed_count ?? 0}</td>
                       <td>
                         <Button

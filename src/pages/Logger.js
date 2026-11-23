@@ -9,7 +9,8 @@ import {
 
 
 async function Logger({ eventType, remarks = null }) {
-  if(auth.currentUser){
+  // Guests (anonymous users) have no email/profile, so don't log them.
+  if(auth.currentUser && !auth.currentUser.isAnonymous){
   const postCollectionUser = collection(db, process.env.REACT_APP_ADMIN_USERS);
 
 
