@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   sendEmailVerification,
   sendPasswordResetEmail,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
@@ -104,7 +105,6 @@ function Login({ setIsAuth }) {
             id,
             date,
             email,
-            
           });
         } else {
           await addDoc(postCollectionRef, {
@@ -153,7 +153,32 @@ function Login({ setIsAuth }) {
         }
       });
   };
+  const handleGuestLogin = async () => {
+    try {
+      await signInAnonymously(auth);
 
+      // Clear any leftover registered-user data so the app
+      // doesn't treat the guest as a previous user.
+      localStorage.removeItem("email");
+      localStorage.removeItem("uid");
+      localStorage.removeItem("name");
+      localStorage.setItem("isAuth", true);
+      setIsAuth(true);
+
+      toast.success("You're browsing as a guest.");
+      navigate("/");
+    } catch (error) {
+      console.error("Guest login failed:", error);
+
+      if (error.code === "auth/admin-restricted-operation") {
+        toast.error(
+          "Guest access is not enabled. Enable Anonymous sign-in in the Firebase console."
+        );
+      } else {
+        toast.error("Unable to continue as guest. Please try again.");
+      }
+    }
+  };
   return (
     <div className="loginPage">
       <section className="signup">
@@ -226,6 +251,13 @@ function Login({ setIsAuth }) {
                 onClick={signInWithGoogle}
               >
                 Continue with Google
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary w-100 mt-3"
+                onClick={handleGuestLogin}
+              >
+                Continue as Guest
               </button>
               <hr />
 
